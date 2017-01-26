@@ -43,7 +43,9 @@ def main(args):
         harchivos.append(ruta) if isfile(ruta) else hfolders.append(ruta)
 
     #crear archivo log
-    # TODO crear archivo log
+    if args.l == "on":
+        # TODO crear archivo log
+        pass
 
     # comprimir archivos
     compressfiles(harchivos, args)
