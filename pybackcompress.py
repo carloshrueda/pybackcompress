@@ -10,7 +10,7 @@ def main(args):
     print("Argumento: ", args)
 
 
-def getargumentos(ha):
+def getargumentos():
     parser = argparse.ArgumentParser(description='Haciendo backup con compresión', usage="%(prog)s [opciones]",
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("o", help="ruta de origen")
@@ -29,32 +29,34 @@ def getargumentos(ha):
     parser.add_argument("--verbose", help="mostrar información de depuración", default=argparse.SUPPRESS)
     parser.add_argument('-v', action='version', version='%(prog)s - Version 0.1', help="versión del programa",
                         default=argparse.SUPPRESS)
-    ha = parser.parse_args()
+    args = parser.parse_args()
 
     # valildar rutas de origen
-    if not os.path.isdir(ha.o):
-        print("Error. La ruta de ORIGEN: " + ha.o + " no existe.")
+    if not os.path.isdir(args.o):
+        print("Error. La ruta de ORIGEN: " + args.o + " no existe.")
         ha = None
         return
 
-    if not os.path.isdir(ha.d):
-        print("Error. La ruta de DESTINO: " + ha.d + " no existe.")
+    if not os.path.isdir(args.d):
+        print("Error. La ruta de DESTINO: " + args.d + " no existe.")
         ha = None
         return
 
-    if ha.l and not os.path.isdir(ha.dl):
-        print("Error. La ruta del LOG: " + ha.dl + " no existe.")
+    if args.l and not os.path.isdir(args.dl):
+        print("Error. La ruta del LOG: " + args.dl + " no existe.")
         ha = None
         return
 
-    if ha.e is not None and not os.path.isdir(ha.e):
-        print("Error. La ruta del archivo para EXCLUIR: " + ha.e + " no existe.")
+    if args.e is not None and not os.path.isdir(args.e):
+        print("Error. La ruta del archivo para EXCLUIR: " + args.e + " no existe.")
         ha = None
         return
 
+    print("args: ", args)
+    return args
 
 if __name__ == "__main__":
-    hargs = None
-    getargumentos(hargs)
-    if hargs:
-        main(hargs)
+    args = None
+    args= getargumentos()
+    if args:
+        main(args)
