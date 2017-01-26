@@ -3,7 +3,6 @@
 import argparse
 
 parser = argparse.ArgumentParser()
-#parser.add_argument("-h", "--help", help="Muestra la ayuda", action="store_true")
 parser.add_argument("-v", "--verbose", help="Mostrar información de depuración", action="store_true")
 parser.add_argument("-f", "--file", help="Nombre de archivo a procesar")
 args = parser.parse_args()
