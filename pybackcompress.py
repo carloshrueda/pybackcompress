@@ -4,6 +4,7 @@
 import argparse
 from os import listdir, remove
 from os.path import isfile, join, isdir
+from time import strftime
 
 
 def compressfolders(hfolders, args):
@@ -12,25 +13,24 @@ def compressfolders(hfolders, args):
 
 
 def compressfiles(harchivos, args):
-    #colocar los archivos en un archivo temporal
-    tmpfile= "./archivos.tmp"
-    farch= open(tmpfile, "w")
+    # colocar los archivos en un archivo temporal
+    tmpfile = "./archivos.tmp"
+    farch = open(tmpfile, "w")
     farch.writelines("\n".join(harchivos))
     farch.flush()
     farch.close()
 
-    #armar comando 7zip
+    # armar comando 7zip
     # 7z.exe u -tzip -r "F:\Backup manual\Back_Programa.zip" "D:\Programa\" -mx9 -mmt=3 -xr@"D:\backups\PROCESOS\excluidos.txt" >> %FILELOG%
-    cmd= '7z.exe %s %s -r %s %s %s -mmt=%s -xi@%s -xr@%s" >> %s"'
+    cmd = '7z.exe %s %s -r %s %s %s -mmt=%s -xi@%s -xr@%s" >> %s"'
     # TODO ejarmar comando 7zip
 
-    #ejecutar comando 7zip
+    # ejecutar comando 7zip
     # TODO ejecutar comando 7zip
 
-    #borrar archivo temporal
+    # borrar archivo temporal
     if isfile(tmpfile):
         remove(tmpfile)
-        pass
 
 
 def main(args):
@@ -42,10 +42,16 @@ def main(args):
         ruta = join(path, item)
         harchivos.append(ruta) if isfile(ruta) else hfolders.append(ruta)
 
-    #crear archivo log
+    # crear archivo log
     if args.l == "on":
-        # TODO crear archivo log
-        pass
+        logpath = args.dl
+        logpath = logpath.replace("\\", "/") + "/" + strftime("%Y%m%d") + "-backcompress.txt"
+        if isfile(logpath):
+            remove(logpath)
+        logfile = open(logpath, "w")
+        logfile.write("[" + strftime("%Y%m%d@%H:%M:%S") + "] [PROCESS START]\n" )
+        logfile.flush()
+        logfile.close()
 
     # comprimir archivos
     compressfiles(harchivos, args)
