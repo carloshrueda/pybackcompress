@@ -2,12 +2,54 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import os
+from os import listdir, remove
+from os.path import isfile, join, isdir
+
+
+def compressfolders(hfolders, args):
+    # TODO compressfolders
+    pass
+
+
+def compressfiles(harchivos, args):
+    #colocar los archivos en un archivo temporal
+    tmpfile= "./archivos.tmp"
+    farch= open(tmpfile, "w")
+    farch.writelines("\n".join(harchivos))
+    farch.flush()
+    farch.close()
+
+    #armar comando 7zip
+    # 7z.exe u -tzip -r "F:\Backup manual\Back_Programa.zip" "D:\Programa\" -mx9 -mmt=3 -xr@"D:\backups\PROCESOS\excluidos.txt" >> %FILELOG%
+    cmd= '7z.exe %s %s -r %s %s %s -mmt=%s -xi@%s -xr@%s" >> %s"'
+    # TODO ejarmar comando 7zip
+
+    #ejecutar comando 7zip
+    # TODO ejecutar comando 7zip
+
+    #borrar archivo temporal
+    if isfile(tmpfile):
+        remove(tmpfile)
+        pass
 
 
 def main(args):
-    # Aquí procesamos lo que se tiene que hacer con cada argumento
-    print("Argumento: ", args)
+    # obtener archivos y folders
+    harchivos = []
+    hfolders = []
+    path = args.o
+    for item in listdir(path):
+        ruta = join(path, item)
+        harchivos.append(ruta) if isfile(ruta) else hfolders.append(ruta)
+
+    #crear archivo log
+    # TODO crear archivo log
+
+    # comprimir archivos
+    compressfiles(harchivos, args)
+
+    # comprimir folders
+    compressfolders(hfolders, args)
 
 
 def getargumentos():
@@ -32,31 +74,31 @@ def getargumentos():
     args = parser.parse_args()
 
     # valildar rutas de origen
-    if not os.path.isdir(args.o):
+    if not isdir(args.o):
         print("Error. La ruta de ORIGEN: " + args.o + " no existe.")
         ha = None
         return
 
-    if not os.path.isdir(args.d):
+    if not isdir(args.d):
         print("Error. La ruta de DESTINO: " + args.d + " no existe.")
         ha = None
         return
 
-    if args.l and not os.path.isdir(args.dl):
+    if args.l and not isdir(args.dl):
         print("Error. La ruta del LOG: " + args.dl + " no existe.")
         ha = None
         return
 
-    if args.e is not None and not os.path.isdir(args.e):
+    if args.e is not None and not isdir(args.e):
         print("Error. La ruta del archivo para EXCLUIR: " + args.e + " no existe.")
         ha = None
         return
 
-    print("args: ", args)
     return args
+
 
 if __name__ == "__main__":
     args = None
-    args= getargumentos()
+    args = getargumentos()
     if args:
         main(args)
