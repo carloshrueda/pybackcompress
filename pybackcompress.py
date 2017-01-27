@@ -212,7 +212,7 @@ def getargumentos():
     parser.add_argument("-dl", type=str, help="ruta del log (por de defecto: %(default)s)",
                         default="work directory")
     parser.add_argument("-nl", type=str, help="nombre archivo del log (por de defecto: %(default)s)",
-                        default="backcompress.log")
+                        default="pybackcompress.log")
     parser.add_argument("--verbose", choices=['on', 'off'],
                         help="mostrar información de depuración (por de defecto: %(default)s)", default="off")
     parser.add_argument('-v', action='version', version='%(prog)s - Version 0.1', help="versión del programa",
