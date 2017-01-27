@@ -2,35 +2,169 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-from os import listdir, remove
-from os.path import isfile, join, isdir
+from os import listdir, remove, getcwd, chdir, system
+from os.path import isfile, join, isdir, dirname, abspath
 from time import strftime
+import sys
+import subprocess
 
 
-def compressfolders(hfolders, args):
-    # TODO compressfolders
-    pass
+def logwritehdl(hdl, msg):
+    hdl.write("[" + strftime("%Y%m%d@%H:%M:%S") + "] " + msg + "\n")
+    hdl.flush()
 
 
-def compressfiles(harchivos, args):
+def logwrite(logpath, msg):
+    logfile = open(logpath, "a")
+    logfile.write("[" + strftime("%Y%m%d@%H:%M:%S") + "] " + msg + "\n")
+    logfile.flush()
+    logfile.close()
+
+
+def printverbose(verbose, msg, msg2=""):
+    if verbose == "on":
+        print("[" + strftime("%Y%m%d@%H:%M:%S") + "] [%s] %s" % (msg, msg2))
+        sys.stdout.flush()
+
+
+def compressfolders(hfolders, args, exclufiles, logfile):
+    logwrite(logfile, "[START COMPRESSFOLDER] ")
+    printverbose(args.verbose, "START COMPRESSFOLDER")
+    progpath = dirname(abspath(__file__)).replace("\\", "/") + "/"
+
+    # cambio de directorio de trabajo
+    workdir = args.wd.replace("\\", "/")
+    chdir(workdir)
+    logwrite(logfile, "[WORKDIR] " + workdir)
+    printverbose(args.verbose, "WORKDIR", workdir)
+
+    # RECORRER LOS DIRECTORIOS
+    dest = args.d.replace("\\", "/")
+    ext = args.t
+    if args.t == "bzip":
+        ext = "bz"
+    for folder in hfolders:
+        logwrite(logfile, "[INIT FOLDER] " + folder)
+        printverbose(args.verbose, "INIT FOLDER", folder)
+
+        # armar comando 7zip
+        # 7z.exe u -tzip -r "F:\Backup manual\Back_Programa.zip" -mx9 -mmt=3 -ir@"D:\backups\PROCESOS\includos" -xr@"D:\backups\PROCESOS\excluidos" >> %FILELOG%
+        # cmd = '7za.exe %s %s -r %s %s %s -mmt=%s -xi@%s -xr@%s" >> %s"'
+        cmd = '"%s7za.exe" ' % (progpath)
+        cmd += "u " if args.a == "on" else "a "  # actualizar
+        cmd += "-t%s " % (args.t)  # metodo de compresion
+
+        #destino
+        orig = folder.replace("\\", "/")
+        ultorig = orig.split("/")
+        cmd += '"%s/%s.%s" ' % (dest, ultorig[-1], ext)
+
+        # origen
+        cmd += '"%s" ' % (orig)
+
+        # excluidos
+        if exclufiles:
+            exclufiles = exclufiles.replace('\\', "/")
+            cmd += '-xr@"%s" ' % (exclufiles) if exclufiles else ""
+
+        # nivel de compresion
+        cmd += "-mx%d " % (args.nc)
+        # hilos
+        cmd += "-mmt=%d " % (args.nh)
+        # directorio de trabajo
+        cmd += '-w"%s" ' % (workdir)
+        # logfile
+        cmd += '>> "%s"' % (logfile)
+
+        # agregar comando al logfile
+        logwrite(logfile, "[CMD] " + cmd)
+        printverbose(args.verbose, "CMD ", cmd)
+
+        # ejecutar comando 7zip
+        cmdexec = subprocess.call(cmd, shell=True)
+        logwrite(logfile, "[CMDOUT] " + str(cmdexec))
+        printverbose(args.verbose, "CMDOUT", str(cmdexec))
+
+        logwrite(logfile, "[FINISH FOLDER] " + folder)
+        printverbose(args.verbose, "FINISH FOLDER", folder)
+
+
+
+    logwrite(logfile, "[END COMPRESSFOLDER] ")
+    printverbose(args.verbose, "END COMPRESSFOLDER")
+
+
+
+def compressfiles(harchivos, args, exclufiles, logfile):
     # colocar los archivos en un archivo temporal
-    tmpfile = "./archivos.tmp"
+    logwrite(logfile, "[START COMPRESSFILE]")
+    printverbose(args.verbose, "START COMPRESSFILE")
+
+    # cambio de directorio de trabajo
+    workdir = args.wd.replace("\\", "/")
+    chdir(workdir)
+    logwrite(logfile, "[WORKDIR] " + workdir)
+    printverbose(args.verbose, "WORKDIR", workdir)
+
+    # archivo temporal de los incluidos
+    progpath = dirname(abspath(__file__)).replace("\\", "/") + "/"
+    tmpfile = progpath + "incluidos.tmp"
     farch = open(tmpfile, "w")
     farch.writelines("\n".join(harchivos))
     farch.flush()
     farch.close()
 
     # armar comando 7zip
-    # 7z.exe u -tzip -r "F:\Backup manual\Back_Programa.zip" "D:\Programa\" -mx9 -mmt=3 -xr@"D:\backups\PROCESOS\excluidos.txt" >> %FILELOG%
-    cmd = '7z.exe %s %s -r %s %s %s -mmt=%s -xi@%s -xr@%s" >> %s"'
-    # TODO ejarmar comando 7zip
+    # 7z.exe u -tzip -r "F:\Backup manual\Back_Programa.zip" -mx9 -mmt=3 -ir@"D:\backups\PROCESOS\includos" -xr@"D:\backups\PROCESOS\excluidos" >> %FILELOG%
+    # cmd = '7za.exe %s %s -r %s %s %s -mmt=%s -xi@%s -xr@%s" >> %s"'
+    cmd = '"%s7za.exe" ' % (progpath)
+    cmd += "u " if args.a == "on" else "a "  # actualizar
+    cmd += "-t%s " % (args.t)  # metodo de compresion
+
+    # destino
+    dest = args.d.replace("\\", "/")
+    orig = args.o.replace("\\", "/")
+    ultorig = orig.split("/")
+    ext = args.t
+    if args.t == "bzip":
+        ext = "bz"
+    cmd += '"%s/%s.%s" ' % (dest, ultorig[-1], ext)
+
+    # origen
+    # cmd += '"%s/*.*" ' % (org)
+
+    # incluidos
+    cmd += '@"%s" ' % (tmpfile)
+
+    # excluidos
+    if exclufiles:
+        exclufiles = exclufiles.replace('\\', "/")
+        cmd += '-xr@"%s" ' % (exclufiles) if exclufiles else ""
+
+    # nivel de compresion
+    cmd += "-mx%d " % (args.nc)
+    # hilos
+    cmd += "-mmt=%d " % (args.nh)
+    # directorio de trabajo
+    cmd += '-w"%s" ' % (workdir)
+    # logfile
+    cmd += '>> "%s"' % (logfile)
+
+    # agregar comando al logfile
+    logwrite(logfile, "[CMD] " + cmd)
+    printverbose(args.verbose, "CMD ", cmd)
 
     # ejecutar comando 7zip
-    # TODO ejecutar comando 7zip
+    cmdexec = subprocess.call(cmd, shell=True)
+    logwrite(logfile, "[CMDOUT] " + str(cmdexec))
+    printverbose(args.verbose, "CMDOUT", str(cmdexec))
 
     # borrar archivo temporal
     if isfile(tmpfile):
         remove(tmpfile)
+
+    logwrite(logfile, "[END COMPRESSFILE] ")
+    printverbose(args.verbose, "END COMPRESSFILE")
 
 
 def main(args):
@@ -46,29 +180,31 @@ def main(args):
     if args.l == "on":
         logpath = args.dl
         logpath = logpath.replace("\\", "/") + "/" + strftime("%Y%m%d") + "-backcompress.txt"
-        if isfile(logpath):
-            remove(logpath)
+        # if isfile(logpath):
+        #     remove(logpath)
         logfile = open(logpath, "w")
-        logfile.write("[" + strftime("%Y%m%d@%H:%M:%S") + "] [PROCESS START]\n" )
+        logfile.write("[" + strftime("%Y%m%d@%H:%M:%S") + "] [PROCESS START]\n")
         logfile.flush()
         logfile.close()
+        printverbose(args.verbose, "PROCESS START")
 
     # comprimir archivos
-    compressfiles(harchivos, args)
+    compressfiles(harchivos, args, args.e, logpath)
 
     # comprimir folders
-    compressfolders(hfolders, args)
+    compressfolders(hfolders, args, args.e, logpath)
 
 
 def getargumentos():
     parser = argparse.ArgumentParser(description='Haciendo backup con compresión', usage="%(prog)s [opciones]",
                                      formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("o", help="ruta de origen")
-    parser.add_argument("d", help="ruta de destino")
+    parser.add_argument("o", help="directorio de origen")
+    parser.add_argument("d", help="directorio de destino")
 
     parser.add_argument("-a", choices=['on', 'off'], help="actualizar archivos (por de defecto: %(default)s)",
                         default="on")
-    parser.add_argument("-e", type=str, help="ruta del archivo con extensiones para excluir")
+    parser.add_argument("-wd", type=str, help="Directorio de trabajo", default=".")
+    parser.add_argument("-e", type=str, help="ruta y nombre del archivo con extensiones para excluir")
     parser.add_argument("-l", type=str, choices=['on', 'off'], help="log (por de defecto: %(default)s)", default="on")
     parser.add_argument("-nc", type=int, choices="09", help="nivel de compresion (por de defecto: %(default)s)",
                         default=9)
@@ -76,7 +212,8 @@ def getargumentos():
     parser.add_argument("-t", type=str, choices=['7z', 'bzip2', 'zip'],
                         help="tipo de compresion (por de defecto: %(default)s)", default="zip")
     parser.add_argument("-dl", type=str, help="ruta destino log (por de defecto: %(default)s)", default=".")
-    parser.add_argument("--verbose", help="mostrar información de depuración", default=argparse.SUPPRESS)
+    parser.add_argument("--verbose", choices=['on', 'off'],
+                        help="mostrar información de depuración (por de defecto: %(default)s)", default="off")
     parser.add_argument('-v', action='version', version='%(prog)s - Version 0.1', help="versión del programa",
                         default=argparse.SUPPRESS)
     args = parser.parse_args()
@@ -92,19 +229,31 @@ def getargumentos():
         ha = None
         return
 
+    # print("args: ", args)
+    # print("args.wd: ", args.wd )
+    # sys.stdout.flush()
+    if args.wd is '.':
+        args.wd = args.d
+
+    if not isdir(args.wd):
+        print("Error. El DIRECTORIO DE TRABAJO: " + args.wd + " no existe.")
+        ha = None
+        return
+
     if args.l and not isdir(args.dl):
         print("Error. La ruta del LOG: " + args.dl + " no existe.")
         ha = None
         return
 
-    if args.e is not None and not isdir(args.e):
-        print("Error. La ruta del archivo para EXCLUIR: " + args.e + " no existe.")
+    if args.e and not isfile(args.e):
+        print("Error. El archivo para EXCLUIR: " + args.e + " no existe.")
         ha = None
         return
 
     return args
 
 
+## PROGRAMA PRINCIPAL
 if __name__ == "__main__":
     args = None
     args = getargumentos()
