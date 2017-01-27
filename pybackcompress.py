@@ -72,7 +72,7 @@ def compressfolders(hfolders, args, exclufiles, logfile):
         # directorio de trabajo
         cmd += '-w"%s" ' % (workdir)
         # logfile
-        cmd += '>> "%s"' % (logfile)
+        cmd += '-scsWIN >> "%s"' % (logfile)
 
         # agregar comando al logfile
         logwrite(logfile, "[CMD] " + cmd)
@@ -102,6 +102,7 @@ def compressfiles(harchivos, args, exclufiles, logfile):
     # archivo temporal de los incluidos
     progpath = dirname(abspath(__file__)).replace("\\", "/") + "/"
     tmpfile = progpath + "incluidos.tmp"
+    printverbose(args.verbose, "INCLUDE FILE", tmpfile)
     farch = open(tmpfile, "w")
     strfiles = "\n".join(harchivos)
     farch.writelines(strfiles)
@@ -147,7 +148,7 @@ def compressfiles(harchivos, args, exclufiles, logfile):
     # directorio de trabajo
     cmd += '-w"%s" ' % (workdir)
     # logfile
-    cmd += '>> "%s"' % (logfile)
+    cmd += '-scsWIN >> "%s"' % (logfile)
 
     # agregar comando al logfile
     logwrite(logfile, "[CMD] " + cmd)
